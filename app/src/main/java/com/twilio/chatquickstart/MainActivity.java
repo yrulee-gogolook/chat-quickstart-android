@@ -27,6 +27,7 @@ import com.twilio.chat.Message;
 import com.twilio.chat.StatusListener;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -202,6 +203,9 @@ public class MainActivity extends AppCompatActivity {
             };
 
     private ChannelListener mDefaultChannelListener = new ChannelListener() {
+
+        boolean isFirstTimeSynced = false;
+
         @Override
         public void onMessageAdd(final Message message) {
             Log.d(TAG, "Message added");
@@ -253,7 +257,24 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSynchronizationChange(Channel channel) {
+            Log.d(TAG, "onSynchronizationChange invoked");
 
+            //Retrieve all messages before
+            if (!isFirstTimeSynced) {
+                mGeneralChannel.getMessages().getMessagesAfter(0, 20, new CallbackListener<List<Message>>() {
+                    @Override
+                    public void onSuccess(final List<Message> messages) {
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mMessages.addAll(messages);
+                                mMessagesAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+                });
+                isFirstTimeSynced = true;
+            }
         }
     };
 
